@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic-Tac-Toe</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-section">
+        <h1>Tic-Tac-Toe</h1>
+        <div class="game-container">
+            <div id="board" class="board"></div>
+        </div>
+        <button id="reset">Reset Game</button>
+    </div>
+
+    <div id="result-section" class="hidden">
+        <h1 id="result-message"></h1>
+        <button onclick="restartGame()">Restart</button>
+    </div>
+
+    <script>
+        const board = document.getElementById("board");
+        const resetButton = document.getElementById("reset");
+        const gameSection = document.getElementById("game-section");
+        const resultSection = document.getElementById("result-section");
+        const resultMessage = document.getElementById("result-message");
+
+        let currentPlayer = "X";
+        let gameBoard = ["", "", "", "", "", "", "", "", ""];
+
+        function createBoard() {
+            board.innerHTML = "";
+            gameBoard.forEach((value, index) => {
+                const cell = document.createElement("div");
+                cell.textContent = value;
+                cell.dataset.index = index;
+                cell.addEventListener("click", handleMove);
+                board.appendChild(cell);
+            });
+        }
+
+        function handleMove(event) {
+            const index = event.target.dataset.index;
+            if (!gameBoard[index] && currentPlayer === "X") {
+                gameBoard[index] = "X";
+                event.target.textContent = "X";
+                if (checkWin("X")) {
+                    showResult("You Won!");
+                    return;
+                } else if (gameBoard.every(cell => cell !== "")) {
+                    showResult("It's a Draw!");
+                    return;
+                }
+                currentPlayer = "O";
+                setTimeout(aiMove, 500); // AI moves after delay
+            }
+        }
+
+        function aiMove() {
+            let move = findBestMove();
+            if (move !== -1) {
+                gameBoard[move] = "O";
+                board.children[move].textContent = "O";
+                if (checkWin("O")) {
+                    showResult("AI Won!");
+                    return;
+                } else if (gameBoard.every(cell => cell !== "")) {
+                    showResult("It's a Draw!");
+                    return;
+                }
+                currentPlayer = "X";
+            }
+        }
+
+        function findBestMove() {
+            const winPatterns = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8],
+                [0, 3, 6], [1, 4, 7], [2, 5, 8],
+                [0, 4, 8], [2, 4, 6]
+            ];
+
+            // 1. Try to win
+            for (let pattern of winPatterns) {
+                let [a, b, c] = pattern;
+                if (gameBoard[a] === "O" && gameBoard[b] === "O" && gameBoard[c] === "") return c;
+                if (gameBoard[a] === "O" && gameBoard[c] === "O" && gameBoard[b] === "") return b;
+                if (gameBoard[b] === "O" && gameBoard[c] === "O" && gameBoard[a] === "") return a;
+            }
+
+            // 2. Block player from winning
+            for (let pattern of winPatterns) {
+                let [a, b, c] = pattern;
+                if (gameBoard[a] === "X" && gameBoard[b] === "X" && gameBoard[c] === "") return c;
+                if (gameBoard[a] === "X" && gameBoard[c] === "X" && gameBoard[b] === "") return b;
+                if (gameBoard[b] === "X" && gameBoard[c] === "X" && gameBoard[a] === "") return a;
+            }
+
+            // 3. Take center if available
+            if (gameBoard[4] === "") return 4;
+
+            // 4. Take a corner if available
+            let corners = [0, 2, 6, 8].filter(i => gameBoard[i] === "");
+            if (corners.length > 0) return corners[Math.floor(Math.random() * corners.length)];
+
+            // 5. Take any empty spot
+            let emptyCells = gameBoard.map((val, i) => val === "" ? i : -1).filter(i => i !== -1);
+            return emptyCells.length > 0 ? emptyCells[Math.floor(Math.random() * emptyCells.length)] : -1;
+        }
+
+        function checkWin(player) {
+            const winPatterns = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8],
+                [0, 3, 6], [1, 4, 7], [2, 5, 8],
+                [0, 4, 8], [2, 4, 6]
+            ];
+            return winPatterns.some(pattern =>
+                gameBoard[pattern[0]] === player &&
+                gameBoard[pattern[1]] === player &&
+                gameBoard[pattern[2]] === player
+            );
+        }
+
+        function showResult(message) {
+            resultMessage.textContent = message;
+            gameSection.style.display = "none";
+            resultSection.style.display = "block";
+        }
+
+        function restartGame() {
+            gameBoard = ["", "", "", "", "", "", "", "", ""];
+            currentPlayer = "X";
+            createBoard();
+            gameSection.style.display = "block";
+            resultSection.style.display = "none";
+        }
+
+        resetButton.addEventListener("click", restartGame);
+
+        createBoard();
+    </script>
+</body>
+</html>
